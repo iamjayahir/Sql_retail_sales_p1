@@ -130,21 +130,18 @@ ORDER BY 1
 
 7. **Write a SQL query to calculate the average sale for each month. Find out best selling month in each year**:
 ```sql
-SELECT 
-       year,
-       month,
-    avg_sale
-FROM 
-(    
-SELECT 
-    EXTRACT(YEAR FROM sale_date) as year,
-    EXTRACT(MONTH FROM sale_date) as month,
-    AVG(total_sale) as avg_sale,
-    RANK() OVER(PARTITION BY EXTRACT(YEAR FROM sale_date) ORDER BY AVG(total_sale) DESC) as rank
-FROM retail_sales
-GROUP BY 1, 2
-) as t1
-WHERE rank = 1
+SELECT YEAR, MONTH,Avg_sale
+FROM(
+		SELECT
+			YEAR (sale_date) AS YEAR,
+			MONTH(sale_date) AS MONTH,
+			ROUND(AVG(total_sale),2) AS Avg_sale,
+			RANK() OVER(PARTITION BY YEAR (sale_date)  ORDER BY ROUND(AVG(total_sale),2) DESC) AS rank_
+		FROM retail_sales
+		GROUP BY 1, 2
+		ORDER BY 1,3 DESC 
+	) as t1
+WHERE t1.rank_ = 1;
 ```
 
 8. **Write a SQL query to find the top 5 customers based on the highest total sales **:
@@ -169,22 +166,26 @@ GROUP BY category
 
 10. **Write a SQL query to create each shift and number of orders (Example Morning <12, Afternoon Between 12 & 17, Evening >17)**:
 ```sql
-WITH hourly_sale
-AS
+WITH hourly_orders AS
 (
-SELECT *,
-    CASE
-        WHEN EXTRACT(HOUR FROM sale_time) < 12 THEN 'Morning'
-        WHEN EXTRACT(HOUR FROM sale_time) BETWEEN 12 AND 17 THEN 'Afternoon'
-        ELSE 'Evening'
-    END as shift
-FROM retail_sales
-)
+
+			SELECT 
+				*,
+				CASE
+					WHEN sale_time < '12:00:00' THEN 'MORNING'
+					WHEN sale_time BETWEEN '12:00:00' AND '17:00:00' THEN 'AFTERNOON'
+					WHEN sale_time > '17:00:00' THEN 'EVENING'
+					ELSE 'NO SHIFT'
+				END as shift
+			FROM retail_sales
+	)
 SELECT 
-    shift,
-    COUNT(*) as total_orders    
-FROM hourly_sale
-GROUP BY shift
+	shift,
+    COUNT(*) As Total_orders
+FROM
+	hourly_orders
+GROUP BY shift;
+
 ```
 
 ## Findings
